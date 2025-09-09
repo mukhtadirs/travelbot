@@ -1,103 +1,178 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const viewRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    viewRef.current?.scrollTo({ top: viewRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
+
+  async function sendMessage() {
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+    const next = [...messages, { role: "user", content: trimmed } as const];
+    setMessages(next);
+    setInput("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ messages: next }),
+      });
+      if (!res.ok || !res.body) throw new Error("Network error");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let assistant = "";
+      setMessages((cur) => [...cur, { role: "assistant", content: "" } as const]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        assistant += decoder.decode(value, { stream: true });
+        setMessages((cur) => {
+          const copy = [...cur];
+          copy[copy.length - 1] = { role: "assistant", content: assistant };
+          return copy;
+        });
+      }
+    } catch (err) {
+      setMessages((cur) => [...cur, { role: "assistant", content: "Sorry, something went wrong." }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function resetChat() {
+    setMessages([]);
+    setInput("");
+  }
+
+  
+
+  return (
+    <main className="min-h-screen gradient-bg">
+      <section className="mx-auto max-w-3xl px-4 py-12">
+        <header className="mb-6">
+          <h1 className="title-gradient text-3xl font-semibold tracking-tight">Velvet Compass</h1>
+          <p className="text-sm text-neutral-300">Underground luxury travel — editorial concierge chat</p>
+          <div className="mt-3 space-y-2">
+            <p className="text-xs text-neutral-400">Try one</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                {
+                  label: "Milan — winter ateliers",
+                  prompt: "Milan in winter — couple. Interests: ateliers & studios. Draft a first pass using A→I→C→R.",
+                },
+                {
+                  label: "Paris — after-hours arc",
+                  prompt: "Draft a 3‑day Paris trip featuring after‑hours experiences.",
+                },
+                {
+                  label: "Waterfront evening (Lisbon)",
+                  prompt: "Lisbon, 3 nights — couple. Interests: waterfront evening + wine. Draft a first pass.",
+                },
+                {
+                  label: "Rooftop sunset (Barcelona)",
+                  prompt: "Barcelona, 2 nights — couple. Interests: rooftop sunset + gastronomy. Draft a first pass.",
+                },
+              ].map(({ label, prompt }) => (
+                <button
+                  key={label}
+                  title={prompt}
+                  onClick={() => {
+                    setInput(prompt);
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  }}
+                  className="chip text-xs rounded-full px-3 py-1"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </header>
+
+        <div className="mb-4 flex gap-2">
+          <button
+            onClick={resetChat}
+            className="rounded-md border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Reset chat
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <div
+          ref={viewRef}
+          className="scroll-area h-[62vh] w-full overflow-y-auto rounded-2xl glass p-4"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          {messages.length === 0 ? (
+            <div className="text-sm text-neutral-300">
+              Ask for a first draft itinerary. Example: “Tokyo, 3 nights — couple, ateliers + after-hours.”
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {messages.map((m, i) => (
+                <li key={i} className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                  {m.role === "assistant" && (
+                    <div className="size-7 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-white/80">VC</div>
+                  )}
+                  <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm bubble ${m.role === "user" ? "bg-white text-black" : "bg-white/6 text-neutral-200"}`}>
+                    {m.role === "assistant" ? (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: (p) => <h2 className="text-base font-semibold mt-2" {...p} />,
+                          h2: (p) => <h3 className="text-sm font-semibold mt-2" {...p} />,
+                          p: (p) => <p className="mb-2 leading-relaxed" {...p} />,
+                          ul: (p) => <ul className="list-disc ml-5 mb-2" {...p} />,
+                        }}
+                      >
+                        {m.content.replace(/^\[mode:[^\]]+\]\s*/i, "")}
+                      </ReactMarkdown>
+                    ) : (
+                      m.content
+                    )}
+                  </div>
+                  {m.role === "user" && (
+                    <div className="size-7 rounded-full bg-white text-black flex items-center justify-center text-[10px]">You</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center gap-2">
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") sendMessage();
+            }}
+            placeholder="Type your request…"
+            className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-3 text-sm outline-none focus:border-white/20"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <button
+            onClick={sendMessage}
+            disabled={loading}
+            className="rounded-xl bg-white px-4 py-3 text-sm font-medium text-black disabled:opacity-60"
+          >
+            {loading ? "…" : "Send"}
+          </button>
+        </div>
+        
+      </section>
+    </main>
   );
 }

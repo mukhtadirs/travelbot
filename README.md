@@ -34,3 +34,18 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Environment
+
+Create a `.env.local` file in the project root with:
+
+```
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-5
+# Optional: override the built-in Velvet Compass system prompt
+DEFAULT_SYSTEM_PROMPT=
+```
+
+## API Route
+
+`src/app/api/chat/route.ts` streams responses from OpenAI. The route injects the Velvet Compass system prompt and returns a text stream you see live in the chat UI.
