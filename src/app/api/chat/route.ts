@@ -20,7 +20,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   let body: unknown;
   try {
     body = await req.json();
-  } catch (err) {
+  } catch {
     return toErrorResponse('Invalid JSON');
   }
 
@@ -77,8 +77,8 @@ export async function POST(req: NextRequest): Promise<Response> {
         'cache-control': 'no-store',
       },
     });
-  } catch (err: any) {
-    const message = err?.message || String(err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
     // Try fallback on model errors (e.g., not found / not available)
     if (preferredModel !== fallbackModel) {
       try {
@@ -90,8 +90,9 @@ export async function POST(req: NextRequest): Promise<Response> {
             'x-model-fallback': fallbackModel,
           },
         });
-      } catch (e: any) {
-        console.error('OpenAI fallback failed:', e?.message || e);
+      } catch (e: unknown) {
+        const emsg = e instanceof Error ? e.message : String(e);
+        console.error('OpenAI fallback failed:', emsg);
       }
     }
     console.error('OpenAI error:', message);
