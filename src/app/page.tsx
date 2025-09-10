@@ -60,14 +60,32 @@ export default function Home() {
   
 
   return (
-    <main className="min-h-screen gradient-bg">
-      <section className="mx-auto max-w-3xl px-4 py-12">
-        <header className="mb-6">
-          <h1 className="title-gradient text-3xl font-semibold tracking-tight">Velvet Compass</h1>
-          <p className="text-sm text-neutral-300">Underground luxury travel — editorial concierge chat</p>
-          <div className="mt-3 space-y-2">
-            <p className="text-xs text-neutral-400">Try one</p>
-            <div className="flex flex-wrap gap-2">
+    <main className="min-h-screen relative">
+      <div className="absolute inset-0 -z-10">
+        <img src="/hero.jpg" alt="Beach" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-black/35" />
+      </div>
+      <nav className="flex items-center justify-between px-6 py-4 text-white">
+        <div className="font-semibold tracking-wide">AGENT HENRIK</div>
+        <ul className="hidden md:flex items-center gap-6 text-sm opacity-90">
+          <li><a href="#">Home</a></li>
+          <li><a href="#">Featured Trips</a></li>
+          <li><a href="#">Packages</a></li>
+          <li><a href="#">Personalised</a></li>
+          <li><a href="#">What We Do</a></li>
+        </ul>
+        <button className="rounded-full bg-white/90 text-black px-4 py-2 text-sm">Contact us</button>
+      </nav>
+      <section className="px-6 pt-16 pb-8 text-center text-white">
+        <h1 className="mx-auto max-w-4xl text-4xl sm:text-5xl md:text-6xl font-normal leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
+          Let Our <em className="italic">AI Concierge</em> will help you discover the world.
+        </h1>
+        <p className="mt-3 text-sm opacity-90">Plan your next trip at easy with our AI concierge who will help you along the way.</p>
+      </section>
+      <section className="mx-auto max-w-3xl px-4 pb-12 text-white">
+        <div className="mt-3 space-y-2">
+          <p className="text-xs text-white/80">Suggestions on what to ask Our AI</p>
+          <div className="flex flex-wrap gap-2">
               {[
                 {
                   label: "Milan — winter ateliers",
@@ -100,12 +118,11 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </header>
 
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4 mt-4 flex gap-2">
           <button
             onClick={resetChat}
-            className="rounded-md border border-white/10 px-3 py-1.5 text-sm hover:bg-white/5"
+            className="rounded-md border border-white/30 text-white/90 px-3 py-1.5 text-sm hover:bg-white/10"
           >
             Reset chat
           </button>
@@ -113,10 +130,10 @@ export default function Home() {
 
         <div
           ref={viewRef}
-          className="scroll-area h-[62vh] w-full overflow-y-auto rounded-2xl glass p-4"
+          className="scroll-area h-[50vh] w-full overflow-y-auto rounded-2xl bg-white/10 backdrop-blur-md p-4 border border-white/20 shadow-2xl"
         >
           {messages.length === 0 ? (
-            <div className="text-sm text-neutral-300">
+            <div className="text-sm text-white/90">
               Ask for a first draft itinerary. Example: “Tokyo, 3 nights — couple, ateliers + after-hours.”
             </div>
           ) : (
@@ -124,9 +141,9 @@ export default function Home() {
               {messages.map((m, i) => (
                 <li key={i} className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   {m.role === "assistant" && (
-                    <div className="size-7 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-white/80">VC</div>
+                    <div className="size-7 rounded-full bg-white/20 flex items-center justify-center text-[10px] text-white/90">VC</div>
                   )}
-                  <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm bubble ${m.role === "user" ? "bg-white text-black" : "bg-white/6 text-neutral-200"}`}>
+                  <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${m.role === "user" ? "bg-white text-black" : "bg-white/10 text-white"}`}>
                     {m.role === "assistant" ? (
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
@@ -160,8 +177,8 @@ export default function Home() {
             onKeyDown={(e) => {
               if (e.key === "Enter") sendMessage();
             }}
-            placeholder="Type your request…"
-            className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-3 text-sm outline-none focus:border-white/20"
+            placeholder="Ask me anything about your Insider Journey"
+            className="flex-1 rounded-xl border border-white/30 bg-black/30 text-white px-3 py-3 text-sm outline-none focus:border-white/60"
           />
           <button
             onClick={sendMessage}
